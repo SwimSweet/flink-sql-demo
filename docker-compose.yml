@@ -1,13 +1,12 @@
 version: '2.1'
 services:
   sql-client:
-    image: hjwsdocker/flink-sql-client:v4
+    image: hjwsdocker/flink-sql-client-pulsar:v1
     depends_on:
       - kafka
       - jobmanager
       - elasticsearch
-    env_file:
-      - ./hadoop-hive.env
+      - pulsar
     environment:
       FLINK_JOBMANAGER_HOST: jobmanager
       ZOOKEEPER_CONNECT: zookeeper
@@ -88,51 +87,13 @@ services:
     image: docker.elastic.co/kibana/kibana:7.6.0
     ports:
       - "5601:5601"
-  namenode:
-    image: bde2020/hadoop-namenode:2.0.0-hadoop2.7.4-java8
-    volumes:
-      - namenode:/hadoop/dfs/name
-    environment:
-      - CLUSTER_NAME=test
-    env_file:
-      - ./hadoop-hive.env
-    ports:
-      - "50070:50070"
-  datanode:
-    image: bde2020/hadoop-datanode:2.0.0-hadoop2.7.4-java8
-    volumes:
-      - datanode:/hadoop/dfs/data
-    env_file:
-      - ./hadoop-hive.env
-    environment:
-      SERVICE_PRECONDITION: "namenode:50070"
-    ports:
-      - "50075:50075"
-      - "8020:8020"
-  hive-server:
-    image: bde2020/hive:2.3.2-postgresql-metastore
-    env_file:
-      - ./hadoop-hive.env
-    environment:
-      HIVE_CORE_CONF_javax_jdo_option_ConnectionURL: "jdbc:postgresql://hive-metastore/metastore"
-      SERVICE_PRECONDITION: "hive-metastore:9083"
-    ports:
-      - "10000:10000"
-  hive-metastore:
-    image: bde2020/hive:2.3.2-postgresql-metastore
-    env_file:
-      - ./hadoop-hive.env
-    command: /opt/hive/bin/hive --service metastore
-    environment:
-      SERVICE_PRECONDITION: "namenode:50070 datanode:50075 hive-metastore-postgresql:5432"
-    ports:
-      - "9083:9083"
-  hive-metastore-postgresql:
-    image: bde2020/hive-metastore-postgresql:2.3.0
-  presto-coordinator:
-    image: shawnzhu/prestodb:0.181
+  pulsar:
+    image: apachepulsar/pulsar:latest
+    command: "bin/pulsar standalone"
     ports:
       - "8080:8080"
+    volumes:
+      - /var/pulsar/data:/pulsar/data
 volumes:
   namenode:
   datanode:
